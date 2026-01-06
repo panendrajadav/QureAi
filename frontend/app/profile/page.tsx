@@ -1,504 +1,394 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { DashboardHeader } from "@/components/dashboard-header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Edit, Check, MapPin, Plus } from "lucide-react"
-import { useHealthData } from "@/hooks/use-health-data"
 
-const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"]
-const CHRONIC_CONDITIONS = ["Diabetes", "Hypertension", "Heart Disease", "Asthma", "Arthritis", "Thyroid Disease"]
+type TabType = "personal" | "medical" | "medical-history" | "medications"
 
 export default function ProfilePage() {
-  const { data, updateUserProfile } = useHealthData()
-  const [editMode, setEditMode] = useState(false)
-  const [newAllergy, setNewAllergy] = useState("")
-  const [newCondition, setNewCondition] = useState("")
-  const [formData, setFormData] = useState({
-    fullName: "",
-    dateOfBirth: "",
+  const [activeTab, setActiveTab] = useState<TabType>("personal")
+  const [isEditing, setIsEditing] = useState(false)
+  const [profileData, setProfileData] = useState({
+    fullName: "Sarah Johnson",
+    dateOfBirth: "March 15, 1985",
     gender: "Female",
     bloodType: "O+",
-    height: "",
-    weight: "",
-    phone: "",
-    email: "",
-    address: "",
-    allergies: [] as string[],
-    chronicConditions: [] as string[],
-    specialConditions: "",
-    emergencyContactName: "",
-    emergencyContactRelation: "",
-    emergencyContactPhone: "",
+    phone: "+1 (555) 123-4567",
+    email: "sarah@email.com",
+    address: "123 Oak Street, Apt 4B, San Francisco, CA 94102",
+    emergencyName: "Michael Johnson",
+    emergencyRelationship: "Spouse",
+    emergencyPhone: "+1 (555) 987-6543",
   })
 
-  useEffect(() => {
-    if (data) {
-      setFormData({
-        fullName: data.user.fullName,
-        dateOfBirth: data.user.dateOfBirth,
-        gender: data.user.gender,
-        bloodType: data.user.bloodType,
-        height: data.user.height,
-        weight: data.user.weight,
-        phone: data.user.phone,
-        email: data.user.email,
-        address: data.user.address,
-        allergies: data.user.allergies,
-        chronicConditions: data.user.chronicConditions,
-        specialConditions: data.user.specialConditions,
-        emergencyContactName: data.user.emergencyContactName,
-        emergencyContactRelation: data.user.emergencyContactRelation,
-        emergencyContactPhone: data.user.emergencyContactPhone,
-      })
-    }
-  }, [data])
+  const tabs = [
+    { id: "personal", label: "Personal Details" },
+    { id: "medical", label: "Medical Details" },
+    { id: "medical-history", label: "Medical History" },
+    { id: "medications", label: "Medications" },
+  ]
 
-  if (!data) {
-    return (
-      <main className="min-h-screen bg-background py-8">
-        <div className="mx-auto max-w-6xl px-6">
-          <p className="text-muted-foreground">Loading profile...</p>
-        </div>
-      </main>
-    )
+  const handleFieldChange = (field: string, value: string) => {
+    setProfileData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleInputChange = (field: string, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleSave = () => {
-    updateUserProfile({
-      fullName: formData.fullName,
-      dateOfBirth: formData.dateOfBirth,
-      gender: formData.gender,
-      bloodType: formData.bloodType,
-      height: formData.height,
-      weight: formData.weight,
-      phone: formData.phone,
-      email: formData.email,
-      address: formData.address,
-      allergies: formData.allergies,
-      chronicConditions: formData.chronicConditions,
-      specialConditions: formData.specialConditions,
-      emergencyContactName: formData.emergencyContactName,
-      emergencyContactRelation: formData.emergencyContactRelation,
-      emergencyContactPhone: formData.emergencyContactPhone,
-    })
-    setEditMode(false)
-  }
-
-  const addAllergy = () => {
-    if (newAllergy && !formData.allergies.includes(newAllergy)) {
-      handleInputChange("allergies", [...formData.allergies, newAllergy])
-      setNewAllergy("")
-    }
-  }
-
-  const removeAllergy = (allergy: string) => {
-    handleInputChange(
-      "allergies",
-      formData.allergies.filter((a) => a !== allergy),
-    )
-  }
-
-  const toggleCondition = (condition: string) => {
-    if (formData.chronicConditions.includes(condition)) {
-      handleInputChange(
-        "chronicConditions",
-        formData.chronicConditions.filter((c) => c !== condition),
-      )
-    } else {
-      handleInputChange("chronicConditions", [...formData.chronicConditions, condition])
-    }
+  const handleSaveProfile = () => {
+    setIsEditing(false)
   }
 
   return (
-    <main className="min-h-screen bg-background py-8">
-      <div className="mx-auto max-w-6xl px-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">My Profile</h1>
-          <p className="mt-2 text-muted-foreground">Manage your personal and medical information</p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <DashboardHeader />
 
-        {/* Profile Header Card */}
-        <Card className="mb-8 border-0 bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardContent className="flex items-center justify-between pt-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-white text-2xl font-bold">
-                {formData.fullName[0]}
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">{formData.fullName}</h2>
-                <p className="text-sm text-muted-foreground">Patient ID: QA-2024-0157</p>
-                <p className="text-sm text-muted-foreground">Member since: December 2023</p>
+      <main className="p-3 sm:p-4 md:p-6 lg:p-8">
+        <div className="max-w-5xl mx-auto">
+          {/* Header Section */}
+          <div className="card-gradient p-4 sm:p-6 md:p-8 mb-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-40"></div>
+            <div className="relative">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+                <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full bg-gradient-primary text-primary-foreground flex items-center justify-center text-xl sm:text-2xl lg:text-3xl font-bold shrink-0 shadow-lg">
+                    SJ
+                  </div>
+                  <div className="min-w-0 flex-1 sm:flex-none">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground break-words">
+                      {profileData.fullName}
+                    </h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">Patient ID: QA-2024-0157</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Member since: December 2023</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="w-full sm:w-auto gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm bg-gradient-to-r from-primary to-accent text-primary-foreground hover:shadow-lg hover:shadow-primary/30 transition-all duration-200"
+                >
+                  <span>{isEditing ? "✕" : "✏️"}</span>
+                  <span className="hidden sm:inline">{isEditing ? "Cancel" : "Edit Profile"}</span>
+                  <span className="sm:hidden">{isEditing ? "Cancel" : "Edit"}</span>
+                </Button>
               </div>
             </div>
-            <Button
-              onClick={() => (editMode ? handleSave() : setEditMode(true))}
-              className={editMode ? "bg-primary hover:bg-primary/90" : "bg-primary hover:bg-primary/90"}
-            >
-              {editMode ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
-              ) : (
-                <>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="mb-6 bg-secondary">
-            <TabsTrigger value="personal">Personal Details</TabsTrigger>
-            <TabsTrigger value="medical">Medical Details</TabsTrigger>
-            <TabsTrigger value="history">Medical History</TabsTrigger>
-            <TabsTrigger value="reports">Reports & Documents</TabsTrigger>
-            <TabsTrigger value="medications">Current Medications</TabsTrigger>
-          </TabsList>
+          {/* Tabs */}
+          <div className="flex gap-2 mb-8 overflow-x-auto pb-2 -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8 scrollbar-hide">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`px-3 sm:px-4 py-2.5 rounded-lg font-semibold whitespace-nowrap transition-all duration-200 text-xs sm:text-sm ${
+                  activeTab === tab.id
+                    ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg shadow-primary/30"
+                    : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-          {/* Personal Details Tab */}
-          <TabsContent value="personal">
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange("fullName", e.target.value)}
-                      disabled={!editMode}
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                    <Input
-                      id="dateOfBirth"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
-                      disabled={!editMode}
-                      className="bg-secondary/50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
-                    {editMode ? (
-                      <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
-                        <SelectTrigger className="bg-secondary/50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Female">Female</SelectItem>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                          <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
+          {/* Tab Content */}
+          <div className="space-y-6">
+            {/* Personal Details */}
+            {activeTab === "personal" && (
+              <div className="card-premium p-4 sm:p-6 md:p-8 space-y-6">
+                <h2 className="text-lg sm:text-2xl font-bold text-foreground">Basic Information</h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
+                      Full Name
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={profileData.fullName}
+                        onChange={(e) => handleFieldChange("fullName", e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-muted border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                      />
                     ) : (
-                      <Input value={formData.gender} disabled className="bg-secondary/50" />
+                      <p className="text-base sm:text-lg font-semibold text-foreground">{profileData.fullName}</p>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bloodType">Blood Type (Required)</Label>
-                    {editMode ? (
-                      <Select
-                        value={formData.bloodType}
-                        onValueChange={(value) => handleInputChange("bloodType", value)}
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
+                      Date of Birth
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={profileData.dateOfBirth}
+                        onChange={(e) => handleFieldChange("dateOfBirth", e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-muted border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                      />
+                    ) : (
+                      <p className="text-base sm:text-lg font-semibold text-foreground">{profileData.dateOfBirth}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-muted-foreground mb-2">Gender</label>
+                    {isEditing ? (
+                      <select
+                        value={profileData.gender}
+                        onChange={(e) => handleFieldChange("gender", e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-muted border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
                       >
-                        <SelectTrigger className="bg-secondary/50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {BLOOD_TYPES.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                      </select>
                     ) : (
-                      <Input value={formData.bloodType} disabled className="bg-secondary/50" />
+                      <p className="text-base sm:text-lg font-semibold text-foreground">{profileData.gender}</p>
                     )}
                   </div>
-                </div>
-
-                <div className="mt-8 border-t border-border pt-6">
-                  <h3 className="mb-6 text-lg font-semibold">Contact Information</h3>
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        disabled={!editMode}
-                        className="bg-secondary/50"
-                      />
-                      {!editMode && <Check className="mt-2 h-4 w-4 text-primary" />}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
-                        disabled={!editMode}
-                        className="bg-secondary/50"
-                      />
-                      {!editMode && <Check className="mt-2 h-4 w-4 text-primary" />}
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="address">Address</Label>
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) => handleInputChange("address", e.target.value)}
-                        disabled={!editMode}
-                        className="bg-secondary/50"
-                      />
-                      {!editMode && <MapPin className="mt-2 h-4 w-4 text-muted-foreground" />}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Medical Details Tab */}
-          <TabsContent value="medical">
-            <Card>
-              <CardHeader>
-                <CardTitle>Medical Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="height">Height</Label>
-                    <Input
-                      id="height"
-                      value={formData.height}
-                      onChange={(e) => handleInputChange("height", e.target.value)}
-                      disabled={!editMode}
-                      className="bg-secondary/50"
-                      placeholder="e.g., 165 cm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="weight">Weight</Label>
-                    <Input
-                      id="weight"
-                      value={formData.weight}
-                      onChange={(e) => handleInputChange("weight", e.target.value)}
-                      disabled={!editMode}
-                      className="bg-secondary/50"
-                      placeholder="e.g., 62 kg"
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t border-border pt-6">
-                  <div className="mb-4 flex items-center justify-between">
-                    <Label>Known Allergies</Label>
-                    {editMode && (
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Add allergy"
-                          value={newAllergy}
-                          onChange={(e) => setNewAllergy(e.target.value)}
-                          className="w-40"
-                        />
-                        <Button size="sm" onClick={addAllergy}>
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.allergies.length > 0 ? (
-                      formData.allergies.map((allergy) => (
-                        <div
-                          key={allergy}
-                          className="flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-sm text-destructive"
-                        >
-                          {allergy}
-                          {editMode && (
-                            <button
-                              onClick={() => removeAllergy(allergy)}
-                              className="ml-1 text-destructive hover:font-bold"
-                            >
-                              ×
-                            </button>
-                          )}
-                        </div>
-                      ))
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
+                      Blood Type
+                    </label>
+                    {isEditing ? (
+                      <select
+                        value={profileData.bloodType}
+                        onChange={(e) => handleFieldChange("bloodType", e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-muted border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                      >
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                        <option>O+</option>
+                        <option>O-</option>
+                      </select>
                     ) : (
-                      <p className="text-sm text-muted-foreground">No known allergies</p>
+                      <p className="text-base sm:text-lg font-semibold text-foreground">{profileData.bloodType}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="border-t border-border pt-6">
-                  <Label className="mb-4 block">Chronic Conditions</Label>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {CHRONIC_CONDITIONS.map((condition) => (
-                      <div key={condition} className="flex items-center gap-2">
-                        <Checkbox
-                          id={condition}
-                          checked={formData.chronicConditions.includes(condition)}
-                          onCheckedChange={() => toggleCondition(condition)}
-                          disabled={!editMode}
+                  <h3 className="text-base sm:text-lg font-bold text-foreground mb-4">Contact Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div>
+                      <label className="block text-xs sm:text-sm font-semibold text-muted-foreground mb-2">
+                        Phone Number
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="tel"
+                          value={profileData.phone}
+                          onChange={(e) => handleFieldChange("phone", e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-lg bg-muted border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
                         />
-                        <Label htmlFor={condition} className="font-normal cursor-pointer">
-                          {condition}
-                        </Label>
-                      </div>
-                    ))}
+                      ) : (
+                        <p className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+                          {profileData.phone}
+                          <span className="text-success text-xs">✓</span>
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs sm:text-sm font-semibold text-muted-foreground mb-2">Email</label>
+                      {isEditing ? (
+                        <input
+                          type="email"
+                          value={profileData.email}
+                          onChange={(e) => handleFieldChange("email", e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-lg bg-muted border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                        />
+                      ) : (
+                        <p className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+                          {profileData.email}
+                          <span className="text-success text-xs">✓</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Special Conditions */}
                 <div className="border-t border-border pt-6">
-                  <Label htmlFor="specialConditions">Special Medical Conditions</Label>
-                  <Input
-                    id="specialConditions"
-                    value={formData.specialConditions}
-                    onChange={(e) => handleInputChange("specialConditions", e.target.value)}
-                    disabled={!editMode}
-                    placeholder="e.g., Pregnancy, Kidney disease"
-                    className="mt-2 bg-secondary/50"
-                  />
+                  <h3 className="text-base sm:text-lg font-bold text-foreground mb-4">Address</h3>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={profileData.address}
+                      onChange={(e) => handleFieldChange("address", e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-lg bg-muted border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                    />
+                  ) : (
+                    <>
+                      <p className="text-base sm:text-lg font-semibold text-foreground">{profileData.address}</p>
+                      <div className="mt-4 text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
+                        <span>📍</span> Verified address
+                      </div>
+                    </>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          {/* Medical History Tab */}
-          <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <CardTitle>Medical History</CardTitle>
-                <CardDescription>Your past medical conditions and treatments</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center text-muted-foreground py-8">
-                <p>Medical history details coming soon</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Reports Tab */}
-          <TabsContent value="reports">
-            <Card>
-              <CardHeader>
-                <CardTitle>Reports & Documents</CardTitle>
-                <CardDescription>Your health reports and medical documents</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {data.reports.map((report) => (
-                    <div
-                      key={report.id}
-                      className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4"
-                    >
+                <div className="border-t border-border pt-6">
+                  <h3 className="text-base sm:text-lg font-bold text-foreground mb-4">Emergency Contact</h3>
+                  <div className="bg-muted/50 rounded-xl p-4 sm:p-6 border border-border">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <p className="font-semibold text-foreground">{report.name}</p>
-                        <p className="text-xs text-muted-foreground">{report.date}</p>
+                        <p className="text-xs sm:text-sm font-semibold text-muted-foreground">Name</p>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={profileData.emergencyName}
+                            onChange={(e) => handleFieldChange("emergencyName", e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-background border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent mt-1 text-sm"
+                          />
+                        ) : (
+                          <p className="font-semibold text-foreground mt-1 text-sm sm:text-base">
+                            {profileData.emergencyName}
+                          </p>
+                        )}
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Download
-                      </Button>
+                      <div>
+                        <p className="text-xs sm:text-sm font-semibold text-muted-foreground">Relationship</p>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={profileData.emergencyRelationship}
+                            onChange={(e) => handleFieldChange("emergencyRelationship", e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-background border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent mt-1 text-sm"
+                          />
+                        ) : (
+                          <p className="font-semibold text-foreground mt-1 text-sm sm:text-base">
+                            {profileData.emergencyRelationship}
+                          </p>
+                        )}
+                      </div>
+                      <div className="sm:col-span-2">
+                        <p className="text-xs sm:text-sm font-semibold text-muted-foreground">Phone</p>
+                        {isEditing ? (
+                          <input
+                            type="tel"
+                            value={profileData.emergencyPhone}
+                            onChange={(e) => handleFieldChange("emergencyPhone", e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-background border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent mt-1 text-sm"
+                          />
+                        ) : (
+                          <p className="font-semibold text-foreground mt-1 text-sm sm:text-base">
+                            {profileData.emergencyPhone}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <div className="border-t border-border pt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <Button
+                      onClick={handleSaveProfile}
+                      className="flex-1 px-6 py-2.5 rounded-lg font-semibold text-sm bg-gradient-to-r from-primary to-accent text-primary-foreground hover:shadow-lg hover:shadow-primary/30 transition-all duration-200"
+                    >
+                      Save Changes
+                    </Button>
+                    <Button onClick={() => setIsEditing(false)} variant="outline" className="flex-1 bg-transparent">
+                      Discard
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Medical Details */}
+            {activeTab === "medical" && (
+              <div className="card-premium p-4 sm:p-6 md:p-8">
+                <h2 className="text-lg sm:text-2xl font-bold text-foreground mb-6">Medical Information</h2>
+                <div className="space-y-6">
+                  <div className="border-b border-border pb-6">
+                    <h3 className="text-base sm:text-lg font-bold text-foreground mb-4">Known Conditions</h3>
+                    <div className="space-y-2">
+                      {["Diabetes Type 2", "Hypertension"].map((condition) => (
+                        <div
+                          key={condition}
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <span className="text-primary font-bold text-lg">✓</span>
+                          <span className="text-foreground text-sm sm:text-base">{condition}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-foreground mb-4">Allergies</h3>
+                    <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800/30 rounded-lg p-4">
+                      <p className="text-xs sm:text-sm text-yellow-900 dark:text-yellow-200">
+                        ✓ No known drug allergies reported
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Medical History */}
+            {activeTab === "medical-history" && (
+              <div className="card-premium p-4 sm:p-6 md:p-8">
+                <h2 className="text-lg sm:text-2xl font-bold text-foreground mb-6">Medical History Timeline</h2>
+                <div className="space-y-4">
+                  {[
+                    { title: "Diabetes Diagnosis", date: "2015", status: "Ongoing" },
+                    { title: "Hypertension Treatment Started", date: "2018", status: "Active" },
+                  ].map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="border border-border rounded-lg p-4 sm:p-5 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-foreground text-sm sm:text-base">{item.title}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Year: {item.date}</p>
+                        </div>
+                        <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold whitespace-nowrap">
+                          {item.status}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Medications Tab */}
-          <TabsContent value="medications">
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Medications</CardTitle>
-                <CardDescription>All medicines you are currently taking</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {data.medicines
-                    .filter((m) => m.status === "active")
-                    .map((medicine) => (
-                      <div key={medicine.id} className="rounded-lg border border-border bg-secondary/30 p-4">
-                        <p className="font-semibold text-foreground">{medicine.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {medicine.dosage} • {medicine.frequency} • {medicine.times}
-                        </p>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Emergency Contact Section */}
-        <Card className="mt-6 border-l-4 border-l-primary">
-          <CardHeader>
-            <CardTitle className="text-lg">Emergency Contact</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-primary/5 rounded-lg p-4">
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Name</p>
-                  <Input
-                    value={formData.emergencyContactName}
-                    onChange={(e) => handleInputChange("emergencyContactName", e.target.value)}
-                    disabled={!editMode}
-                    className="mt-1 bg-transparent border-0 text-foreground font-semibold px-0"
-                  />
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Relationship</p>
-                    <Input
-                      value={formData.emergencyContactRelation}
-                      onChange={(e) => handleInputChange("emergencyContactRelation", e.target.value)}
-                      disabled={!editMode}
-                      className="mt-1 bg-transparent border-0 text-foreground font-semibold px-0"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                    <Input
-                      value={formData.emergencyContactPhone}
-                      onChange={(e) => handleInputChange("emergencyContactPhone", e.target.value)}
-                      disabled={!editMode}
-                      className="mt-1 bg-transparent border-0 text-foreground font-semibold px-0"
-                    />
-                  </div>
-                </div>
-                <p className="mt-4 text-xs text-muted-foreground">Accessible in emergencies</p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+            )}
+
+            {/* Current Medications */}
+            {activeTab === "medications" && (
+              <div className="card-premium p-4 sm:p-6 md:p-8">
+                <h2 className="text-lg sm:text-2xl font-bold text-foreground mb-6">Current Medications</h2>
+                <div className="space-y-3 sm:space-y-4">
+                  {[
+                    { name: "Metformin", dosage: "500mg", frequency: "2 tablets daily", status: "Active" },
+                    { name: "Aspirin", dosage: "100mg", frequency: "1 tablet daily", status: "Active" },
+                    { name: "Lisinopril", dosage: "10mg", frequency: "1 tablet daily", status: "Active" },
+                  ].map((med) => (
+                    <div
+                      key={med.name}
+                      className="border border-border rounded-lg p-4 sm:p-5 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-foreground text-sm sm:text-base">{med.name}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                            {med.dosage} • {med.frequency}
+                          </p>
+                        </div>
+                        <span className="inline-block px-3 py-1 rounded-full bg-success/10 text-success text-xs font-semibold whitespace-nowrap">
+                          {med.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
   )
 }
