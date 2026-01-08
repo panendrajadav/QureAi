@@ -1,10 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import apiClient from "@/lib/api-client"
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,9 @@ export default function SignupPage() {
   const [healthInterests, setHealthInterests] = useState<string[]>([])
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [otpSent, setOtpSent] = useState(false)
+  const router = useRouter()
 
   const healthOptions = [
     "Diabetes Management",
@@ -33,18 +37,36 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.fullName || !formData.email || !formData.password) {
+      setError("Please fill in all required fields")
+      return
+    }
+    
     setIsLoading(true)
+    setError("")
+    
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      console.log("[v0] Signup successful with interests:", healthInterests)
-      // Redirect to onboarding
-      window.location.href = "/onboarding/health-status"
+      const result = await apiClient.signup(formData.email, formData.password, formData.fullName)
+      if (result.success) {
+        router.push("/onboarding/health-status")
+      } else {
+        setError(result.message || "Signup failed")
+      }
     } catch (error) {
-      console.error("[v0] Signup error:", error)
+      setError("Signup failed. Please try again.")
+      console.error("Signup error:", error)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSendOTP = () => {
+    if (!formData.email) {
+      setError("Please enter your email first")
+      return
+    }
+    setOtpSent(true)
+    console.log("OTP sent to:", formData.email)
   }
 
   return (
@@ -68,6 +90,13 @@ export default function SignupPage() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Error Message */}
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+              
               {/* Full Name */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
@@ -139,10 +168,10 @@ export default function SignupPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => console.log("[v0] OTP sent to:", formData.email)}
+                    onClick={handleSendOTP}
                     className="whitespace-nowrap bg-transparent text-sm"
                   >
-                    Send OTP
+                    {otpSent ? "OTP Sent" : "Send OTP"}
                   </Button>
                 </div>
               </div>

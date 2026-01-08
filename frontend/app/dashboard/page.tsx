@@ -1,41 +1,65 @@
+"use client"
+
 import { DashboardHeader } from "@/components/dashboard-header"
 import { MedicineCard } from "@/components/medicine-card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useState, useEffect } from "react"
+import apiClient from "@/lib/api-client"
 
 export default function DashboardPage() {
-  const medicines = [
-    {
-      id: 1,
-      name: "Metformin",
-      dosage: "500mg",
-      frequency: "2 tablets daily",
-      times: "Morning, Evening",
-      reason: "Diabetes Management",
-      prescribedBy: "Dr. Smith",
-      startDate: "Jan 10, 2024",
-    },
-    {
-      id: 2,
-      name: "Aspirin",
-      dosage: "100mg",
-      frequency: "1 tablet daily",
-      times: "Morning",
-      reason: "Blood Clot Prevention",
-      prescribedBy: "Dr. Johnson",
-      startDate: "Dec 15, 2023",
-    },
-    {
-      id: 3,
-      name: "Lisinopril",
-      dosage: "10mg",
-      frequency: "1 tablet daily",
-      times: "Evening",
-      reason: "Hypertension Control",
-      prescribedBy: "Dr. Smith",
-      startDate: "Nov 20, 2023",
-    },
-  ]
+  const [medicines, setMedicines] = useState([])
+  const [dashboardData, setDashboardData] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const data = await apiClient.getDashboardData()
+        setDashboardData(data)
+        setMedicines(data.medicines || [])
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error)
+        // Use fallback data if API fails
+        setMedicines([
+          {
+            id: 1,
+            name: "Metformin",
+            dosage: "500mg",
+            frequency: "2 tablets daily",
+            times: "Morning, Evening",
+            reason: "Diabetes Management",
+            prescribedBy: "Dr. Smith",
+            startDate: "Jan 10, 2024",
+          },
+          {
+            id: 2,
+            name: "Aspirin",
+            dosage: "100mg",
+            frequency: "1 tablet daily",
+            times: "Morning",
+            reason: "Blood Clot Prevention",
+            prescribedBy: "Dr. Johnson",
+            startDate: "Dec 15, 2023",
+          },
+          {
+            id: 3,
+            name: "Lisinopril",
+            dosage: "10mg",
+            frequency: "1 tablet daily",
+            times: "Evening",
+            reason: "Hypertension Control",
+            prescribedBy: "Dr. Smith",
+            startDate: "Nov 20, 2023",
+          },
+        ])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadDashboardData()
+  }, [])
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,7 +102,7 @@ export default function DashboardPage() {
               <div className="relative">
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">Safety Score</p>
                 <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary">
-                  93<span className="text-lg text-muted-foreground">/100</span>
+                  {dashboardData?.stats?.safety_score || 93}<span className="text-lg text-muted-foreground">/100</span>
                 </p>
                 <p className="text-xs text-success font-semibold mt-2">✓ Low Risk</p>
               </div>
@@ -89,7 +113,9 @@ export default function DashboardPage() {
               <div className="absolute inset-0 bg-gradient-primary-subtle opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative">
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">Last Sync</p>
-                <p className="text-xl sm:text-2xl font-bold text-foreground">Just now</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">
+                  {dashboardData?.stats?.last_updated ? 'Just now' : 'Just now'}
+                </p>
                 <p className="text-xs text-muted-foreground mt-2">Real-time monitoring active</p>
               </div>
             </div>

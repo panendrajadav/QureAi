@@ -1,28 +1,40 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import apiClient from "@/lib/api-client"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!email || !password) {
+      setError("Please fill in all fields")
+      return
+    }
+    
     setIsLoading(true)
+    setError("")
+    
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log("[v0] Login successful for:", email)
-      // Redirect to dashboard
-      window.location.href = "/dashboard"
+      const result = await apiClient.login(email, password)
+      if (result.success) {
+        router.push("/dashboard")
+      } else {
+        setError(result.message || "Login failed")
+      }
     } catch (error) {
-      console.error("[v0] Login error:", error)
+      setError("Login failed. Please check your credentials.")
+      console.error("Login error:", error)
     } finally {
       setIsLoading(false)
     }
@@ -47,6 +59,13 @@ export default function LoginPage() {
             <p className="text-muted-foreground mb-8">Continue your health journey</p>
 
             <form onSubmit={handleLogin} className="space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+              
               {/* Email Input */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
