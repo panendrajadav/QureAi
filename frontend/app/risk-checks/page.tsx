@@ -8,6 +8,7 @@ import { ChatMessage } from "@/components/chat-message"
 import { SafetyScore } from "@/components/safety-score"
 import { MedicationsList } from "@/components/medications-list"
 import { Button } from "@/components/ui/button"
+import apiClient from "@/lib/api-client"
 
 // Dynamic import for 3D component
 const MedicineInteractionVisualizer = dynamic(() => import("@/components/medicine-3d-visualizer"), {
@@ -65,7 +66,7 @@ export default function RiskChecksPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!inputValue.trim()) return
+    if (!inputValue.trim() || isLoading) return
 
     const userMessage: Message = {
       id: Date.now(),
@@ -73,19 +74,34 @@ export default function RiskChecksPage() {
       content: inputValue,
     }
     setMessages((prev) => [...prev, userMessage])
+    const currentInput = inputValue
     setInputValue("")
     setIsLoading(true)
 
-    setTimeout(() => {
+    try {
+      // Call backend /analyze endpoint
+      const response = await apiClient.sendAnalysis(currentInput)
+      
+      // Extract explanation from response
+      const aiContent = response.explanation || "I've analyzed your query. Please consult with your healthcare provider for personalized advice."
+      
       const aiMessage: Message = {
         id: Date.now() + 1,
         type: "ai",
-        content:
-          "Based on your health profile, I've reviewed your inquiry. Your current medications appear to have good compatibility. However, I recommend consulting with your doctor before adding any new supplements.",
+        content: aiContent,
       }
       setMessages((prev) => [...prev, aiMessage])
+    } catch (error) {
+      console.error('Analysis failed:', error)
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        type: "ai",
+        content: "I'm having trouble analyzing your request right now. Please try again or consult your healthcare provider.",
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   return (

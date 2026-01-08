@@ -25,7 +25,7 @@ app = FastAPI(title="QuraAI API", version="1.0.0")
 # CORS middleware for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -214,6 +214,27 @@ async def get_risk_assessment(user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Main analyze endpoint for AI + Quantum processing
+@app.post("/analyze")
+async def analyze_health_message(request: ChatMessageRequest):
+    try:
+        # Simple response for now - replace with your AI + Quantum logic
+        response_data = {
+            "parsed": {
+                "message": request.message,
+                "timestamp": datetime.now().isoformat()
+            },
+            "quantum": {
+                "status": "processed",
+                "risk_score": 0.3
+            },
+            "risk": "low",
+            "explanation": f"I've analyzed your message: '{request.message}'. Based on current health data, your risk level appears to be low. Please consult with your healthcare provider for personalized medical advice."
+        }
+        return response_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Chat endpoints
 @app.post("/chat")
 async def chat_message(request: ChatMessageRequest, user: dict = Depends(get_current_user)):
@@ -260,4 +281,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=5000)
